@@ -1,0 +1,74 @@
+// by m1b, here: https://community.adobe.com/t5/illustrator-discussions/illustrator-script-for-multiple-layer-creation-and-naming/m-p/12451899
+
+dialogWithTextArea({
+
+    // explanatory text
+    intro: 'Enter layer names here, delimited by returns',
+
+    // the starting text of text area (optional)
+    text: 'Layer A\nLayer B\nLayer C',
+
+    // the button title (optional)
+    buttonTitle: 'Make Layers',
+
+    // the window title (optional)
+    windowTitle: 'Make layers',
+
+    // the function that executes when button clicked (optional)
+    callback: makeLayersFromTextList
+
+});
+
+function makeLayersFromTextList(text) {
+    var layerNames = text.split('\n');
+    for (var i = layerNames.length - 1; i >= 0; i--) {
+        if (layerNames[i].length > 0)
+            makeLayer(layerNames[i]);
+    }
+}
+
+function makeLayer(name) {
+    // makes a new layer in active document, if not present
+    var newLayer;
+    try {
+        newLayer = app.activeDocument.layers.getByName(name);
+    } catch (e) {
+        // no layer by that name, so make it
+        newLayer = app.activeDocument.layers.add()
+        newLayer.name = name;
+    }
+    return newLayer;
+}
+
+function dialogWithTextArea(p) {
+    var dialog = makeUI(p);
+    dialog.center();
+    dialog.show();
+    dialog = null;
+    function makeUI(p) {
+        var windowTitle = p.windowTitle || '',
+            text = p.text || '',
+            buttonTitle = p.buttonTitle || 'OK',
+            width = p.width || 350,
+            w = new Window("dialog", windowTitle);
+
+        if (p.intro != undefined)
+            w.add('statictext', undefined, p.intro, { alignment: 'left' });
+
+        var textArea = w.add('edittext', undefined, text, { multiline: true, scrolling: true }),
+            row = w.add("Group {orientation:'row', alignment:['right','top'] }");
+        if (p.callback != undefined)
+            row.add('button', undefined, 'Cancel', { name: 'cancel' });
+        var okButton = row.add('button', undefined, buttonTitle, { name: 'ok' });
+        textArea.preferredSize.height = w.maximumSize.height - 400;
+        textArea.preferredSize.width = width;
+        textArea.minimumSize.height = 250;
+        textArea.minimumSize.width = 200;
+        okButton.onClick = function () {
+            // pass the text to the callback function
+            if (p.callback != undefined) p.callback(textArea.text);
+            w.close(1);
+        };
+        return w;
+    }
+}
